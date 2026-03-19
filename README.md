@@ -23,7 +23,7 @@ entrenamientos totales
 
 entrenamentos completados 
 
-entrenamentos pendientes 🎯
+entrenamentos pendientes 
 
 Distribución por categoría
 
