@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Taskflow Gym - Gestión entrenamiento</title>
+    </head>
+    <body>
+        <div class="app container">
+            <header class="header">
+                <h1 class="header__title">Taskflow Gym</h1>
+                <p  class="header__subtitle">Entrena duro, logra tus metas</p>
+                <p class ="header__date">
+                    <span class="header__date-icon">📅</span>
+                    Jueves, 19 Marzo 2026 | semana 12/52
+                </p>
+            </header>
+            <div class="content">
+                <main class="main">
+
+                    <!-- Formulario y lista de entrenamientos -->
+                     <section class="form-section">
+                        <h2 class="form-section__title">Nuevo Entrenamiento</h2>
+                        
+                        <form class="form" id="workout-form">
+                            <div class="form__group">
+                                <label for="workout-input" class="sr-only">
+                                    Nombre del entrenamiento
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="workout-input"
+                                    class="form__input"
+                                    placeholder="Ej: Press banca 4x8"
+                                    required
+                                >
+                                <button type="submit" class="form__button">
+                                    + Añadir
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- SECCIÓN: Categorías -->
+                    <section class="categories-section">
+                        <h2 class="categories-section__title">Categorías de Entrenamiento</h2>
+                        
+                        <div class="categories" role="group" aria-label="Filtrar por categoría">
+                            <button 
+                                type="button" 
+                                class="category-button category-button--push category-button--active"
+                                data-category="push"
+                            >
+                                💪 Push (<span class="category-button__count">5</span>)
+                            </button>
+                            
+                            <button 
+                                type="button" 
+                                class="category-button category-button--pull"
+                                data-category="pull"
+                            >
+                                🔥 Pull (<span class="category-button__count">3</span>)
+                            </button>
+                            
+                            <button 
+                                type="button" 
+                                class="category-button category-button--legs"
+                                data-category="legs"
+                            >
+                                🦵 Legs (<span class="category-button__count">4</span>)
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- SECCIÓN: Lista de entrenamientos -->
+                    <section class="workouts-section">
+                        <h2 class="workouts-section__title">Mis Entrenamientos</h2>
+                        
+                        <ul class="workout-list" id="workout-list">
+                            <!-- Entrenamiento completado -->
+                            <li class="workout-item workout-item--pull workout-item--completed">
+                                <label class="workout-item__checkbox-label">
+                                    <input 
+                                        type="checkbox" 
+                                        class="workout-item__checkbox"
+                                        checked
+                                    >
+                                    <span class="workout-item__checkmark"></span>
+                                </label>
+                                
+                                <div class="workout-item__content">
+                                    <span class="workout-item__name">Dominadas 3x12</span>
+                                    <div class="workout-item__meta">
+                                        <span class="badge badge--pull">🔥 PULL</span>
+                                        <span class="workout-item__muscle">Espalda</span>
+                                    </div>
+                                </div>
+                                
+                                <button 
+                                    type="button" 
+                                    class="workout-item__delete"
+                                    aria-label="Eliminar entrenamiento"
+                                >
+                                    🗑️
+                                </button>
+                            </li>
+
+                            <!-- Entrenamiento pendiente -->
+                            <li class="workout-item workout-item--legs">
+                                <label class="workout-item__checkbox-label">
+                                    <input 
+                                        type="checkbox" 
+                                        class="workout-item__checkbox"
+                                    >
+                                    <span class="workout-item__checkmark"></span>
+                                </label>
+                                
+                                <div class="workout-item__content">
+                                    <span class="workout-item__name">Sentadillas 5x5</span>
+                                    <div class="workout-item__meta">
+                                        <span class="badge badge--legs">🦵 LEGS</span>
+                                        <span class="workout-item__muscle">Piernas</span>
+                                    </div>
+                                </div>
+                                
+                                <button 
+                                    type="button" 
+                                    class="workout-item__delete"
+                                    aria-label="Eliminar entrenamiento"
+                                >
+                                    🗑️
+                                </button>
+                            </li>
+                        </ul>
+                    </section>
+                </main>
+                    <!-- Panel de estadísticas -->
+                     <aside class="sidebar">
+                        <h2 class="sidebar__title">Progreso Semanal</h2>
+                        
+                        <!-- Tarjeta: Total entrenamientos -->
+                        <article class="stat-card stat-card--orange">
+                            <span class="stat-card__icon">🔥</span>
+                            <span class="stat-card__number">12</span>
+                            <span class="stat-card__label">Entrenamientos</span>
+                        </article>
+                        
+                        <!-- Tarjeta: Completados -->
+                        <article class="stat-card stat-card--green">
+                            <span class="stat-card__icon">✅</span>
+                            <span class="stat-card__number">8</span>
+                            <span class="stat-card__label">Completados</span>
+                        </article>
+                        
+                        <!-- Tarjeta: Pendientes -->
+                        <article class="stat-card stat-card--blue">
+                            <span class="stat-card__icon">🎯</span>
+                            <span class="stat-card__number">4</span>
+                            <span class="stat-card__label">Pendientes</span>
+                        </article>
+                        
+                        <!-- Tarjeta: Distribución semanal -->
+                        <article class="stat-card">
+                            <h3 class="stat-card__title">Esta semana:</h3>
+                            <ul class="stat-card__list">
+                                <li class="stat-card__list-item">
+                                    <span class="badge badge--push">💪 Push</span>
+                                    <span class="stat-card__count">5</span>
+                                </li>
+                                <li class="stat-card__list-item">
+                                    <span class="badge badge--pull">🔥 Pull</span>
+                                    <span class="stat-card__count">3</span>
+                                </li>
+                                <li class="stat-card__list-item">
+                                    <span class="badge badge--legs">🦵 Legs</span>
+                                    <span class="stat-card__count">4</span>
+                                </li>
+                            </ul>
+                        </article>
+                        
+                        <!-- Tarjeta: Progreso semanal -->
+                        <article class="stat-card">
+                            <div class="stat-card__header">
+                                <h3 class="stat-card__title">Meta semanal</h3>
+                                <span class="stat-card__percentage">67%</span>
+                            </div>
+                            
+                            <div class="progress-bar" role="progressbar" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar__fill" style="width: 67%;"></div>
+                            </div>
+                            
+                            <span class="stat-card__detail">8 de 12 completados</span>
+                        </article>
+                    </aside>
+            </div>
+            <!-- FOOTER -->
+        <footer class="footer">
+            <p class="footer__brand">TaskFlow Gym &copy; 2026 - Corner Estudio</p>
+            <p class="footer__description">Desarrollo de Aplicaciones Multiplataforma</p>
+        </footer>
+        </div>
+        <script src="app.js"></script>
+    </body>
+</html>
