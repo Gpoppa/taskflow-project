@@ -497,9 +497,47 @@ function init() {
 
     // Renderizar inicial
     render();
-
+    loadDarkMode();
     console.log('✅ TaskFlow Gym inicializado correctamente');
 }
 
 // Iniciar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', init);
+
+// ==============================
+// DARK MODE
+// ==============================
+
+const DARK_MODE_KEY = "taskflow_dark_mode";
+
+function toggleDarkMode() {
+    const html = document.documentElement;
+    const button = document.getElementById("dark-toggle");
+
+    const isDark = html.classList.toggle("dark");
+
+    // Salva in LocalStorage
+    localStorage.setItem("taskflow_dark_mode", isDark);
+
+    // Cambia testo bottone
+    if (isDark) {
+        button.textContent = "☀️ Light Mode";
+    } else {
+        button.textContent = "🌙 Dark Mode";
+    }
+}
+
+function loadDarkMode() {
+    const html = document.documentElement;
+    const button = document.getElementById("dark-toggle");
+
+    const isDark = localStorage.getItem("taskflow_dark_mode") === "true";
+
+    if (isDark) {
+        html.classList.add("dark");
+        button.textContent = "☀️ Light Mode";
+    } else {
+        html.classList.remove("dark");
+        button.textContent = "🌙 Dark Mode";
+    }
+}

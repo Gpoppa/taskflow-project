@@ -5,22 +5,44 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Taskflow Gym - Gestión entrenamiento</title>
         <link rel="stylesheet" href="style.css">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                darkMode: 'class'
+            }
+        </script>
     </head>
-    <body>
-        <div class="app container">
-            <header class="header">
-                <h1 class="header__title">Taskflow Gym</h1>
-                <p  class="header__subtitle">Entrena duro, logra tus metas</p>
-                <p class ="header__date">
-                    <span class="header__date-icon">📅</span>
-                    Jueves, 19 Marzo 2026 | semana 12/52
-                </p>
-            </header>
+    <body class="bg-white text-black dark:bg-gray-900 dark:text-white transition">
+        <div class="app container dark:bg-gray-800 transition">
+
+<header class="header bg-gray-100 dark:bg-gray-800 transition text-center py-4">
+
+    <h1 class="header__title">Taskflow Gym</h1>
+
+    <p class="header__subtitle">Entrena duro, logra tus metas</p>
+
+    <p class="header__date">
+        <span class="header__date-icon">📅</span>
+        Jueves, 19 Marzo 2026 | semana 12/52
+    </p>
+
+    <div class="flex justify-center mt-3">
+        <button 
+            id="dark-toggle"
+            onclick="toggleDarkMode()"
+            class="px-4 py-2 rounded-full bg-gray-200 dark:bg-gray-700 text-black dark:text-white shadow-md transition"
+        >
+            🌙 Dark Mode
+        </button>
+    </div>
+
+</header>
+
             <div class="content">
                 <main class="main">
 
                     <!-- Formulario y lista de entrenamientos -->
-                     <section class="form-section">
+                     <section class="form-section bg-gray-50 dark:bg-gray-800 transition">
                         <h2 class="form-section__title">Nuevo Entrenamiento</h2>
                         
                         <form class="form" id="workout-form">
@@ -31,11 +53,11 @@
                                 <input 
                                     type="text" 
                                     id="workout-input"
-                                    class="form__input"
+                                    class="form__input bg-white dark:bg-gray-700 text-black dark:text-white"
                                     placeholder="Ej: Press banca 4x8"
                                     required
                                 >
-                                <button type="submit" class="form__button">
+                                <button type="submit" class="form__button bg-orange-500 dark:bg-orange-400 text-white"">
                                     + Añadir
                                 </button>
                             </div>
@@ -76,8 +98,7 @@
                             <input 
                                     type="text" 
                                     id="search-input"
-                                    class="form__input"
-                                    placeholder="Buscar entrenamiento..."
+                                    class="form__input bg-white dark:bg-gray-700 text-black dark:text-white"                                    placeholder="Buscar entrenamiento..."
                                     style="margin-top: 10px;"
                             >
                             
@@ -88,6 +109,30 @@
                         <h2 class="workouts-section__title">Mis Entrenamientos</h2>
  
                         <div class="categories" style="margin-top: 10px;">
+
+                            <!-- FILTROS -->
+                            <button 
+                                class="category-button"
+                                onclick="setFilter('all')"
+                            >
+                                📋 Todas
+                            </button>
+
+                            <button 
+                                class="category-button"
+                                onclick="setFilter('pending')"
+                            >
+                                ⏳ Pendientes
+                            </button>
+
+                            <button 
+                                class="category-button"
+                                onclick="setFilter('completed')"
+                            >
+                                ✔ Completadas
+                            </button>
+
+                            <!-- AZIONI -->
                             <button 
                                 class="category-button"
                                 onclick="completeAll()"
@@ -101,11 +146,12 @@
                             >
                                 🗑️ Eliminar completados
                             </button>
+
                         </div>                        
 
-                        <ul class="workout-list" id="workout-list">
+                        <ul class="workout-list bg-white dark:bg-gray-800 transition" id="workout-list">
                             <!-- Entrenamiento completado -->
-                            <li class="workout-item workout-item--pull workout-item--completed">
+                            <li class="workout-item workout-item--pull workout-item--completed bg-gray-100 dark:bg-gray-700 transition">
                                 <label class="workout-item__checkbox-label">
                                     <input 
                                         type="checkbox" 
@@ -162,11 +208,11 @@
                     </section>
                 </main>
                     <!-- Panel de estadísticas -->
-                     <aside class="sidebar">
+                     <aside class="sidebar bg-gray-100 dark:bg-gray-800 transition">
                         <h2 class="sidebar__title">Progreso Semanal</h2>
                         
                         <!-- Tarjeta: Total entrenamientos -->
-                        <div class="stat-card stat-card--orange">
+                        <div class="stat-card stat-card--orange bg-white dark:bg-gray-700 transition">
                             <span class="stat-card__icon">🔥</span>
                             <span class="stat-card__number">12</span>
                             <span class="stat-card__label">Entrenamientos</span>
