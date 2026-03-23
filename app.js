@@ -20,6 +20,8 @@ const CATEGORIES = {
 // Estado de la aplicación
 let workouts = [];
 let activeFilter = null;
+let searchText = '';
+let statusFilter = 'all'; // 'all', 'completed', 'pending'
 
 // ============================================
 // UTILIDADES - FUNCIONES REUTILIZABLES
@@ -160,6 +162,30 @@ function deleteWorkout(id) {
     render();
 }
 
+function completeAll() {
+    workouts.forEach(w => w.completed = true);
+    saveToStorage();
+    render();
+}
+
+function deleteCompleted() {
+    workouts = workouts.filter(w => !w.completed);
+    saveToStorage();
+    render();
+}
+
+function editWorkout(id) {
+    const workout = workouts.find(w => w.id === id);
+    if (!workout) return;
+
+    const newTitle = prompt("Nuevo título:", workout.title);
+
+    if (newTitle && newTitle.trim()) {
+        workout.title = newTitle.trim();
+        saveToStorage();
+        render();
+    }
+}
 /**
  * Filtra entrenamientos por categoría
  * @param {string|null} category - Categoría a filtrar o null para todos
@@ -226,7 +252,13 @@ function createWorkoutHTML(workout) {
             </label>
 
             <div class="workout-item__content">
-                <span class="workout-item__name">${escapeHTML(workout.title)}</span>
+                <span 
+                    class="workout-item__name"
+                    onclick="editWorkout('${workout.id}')"
+                    style="cursor: pointer;"
+                >
+                    ${escapeHTML(workout.title)}
+                </span>
                 <div class="workout-item__meta">
                     <span class="badge badge--${workout.category}">${category.emoji} ${category.label.toUpperCase()}</span>
                     <span class="workout-item__muscle">${category.muscle}</span>
@@ -264,9 +296,26 @@ function renderWorkouts() {
     if (!listElement) return;
 
     // Filtrar si hay categoría activa
-    let filteredWorkouts = activeFilter
-        ? workouts.filter(w => w.category === activeFilter)
-        : workouts;
+    let filteredWorkouts = [...workouts];
+
+    // filtro categoria
+    if (activeFilter) {
+        filteredWorkouts = filteredWorkouts.filter(w => w.category === activeFilter);
+    }
+
+    // filtro stato
+    if (statusFilter === "completed") {
+        filteredWorkouts = filteredWorkouts.filter(w => w.completed);
+    } else if (statusFilter === "pending") {
+        filteredWorkouts = filteredWorkouts.filter(w => !w.completed);
+    }
+
+    // filtro search
+    if (searchText) {
+        filteredWorkouts = filteredWorkouts.filter(w =>
+            w.title.toLowerCase().includes(searchText)
+        );
+    }
 
     if (filteredWorkouts.length === 0) {
         listElement.innerHTML = `
@@ -419,6 +468,14 @@ function initEventListeners() {
             filterByCategory(category);
         });
     });
+    // Buscador
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            searchText = e.target.value.toLowerCase();
+            render();
+        });
+    }
 }
 
 // ============================================

@@ -40,6 +40,7 @@
                                 </button>
                             </div>
                         </form>
+
                     </section>
 
                     <!-- SECCIÓN: Categorías -->
@@ -71,12 +72,37 @@
                                 🦵 Legs (<span class="category-button__count">4</span>)
                             </button>
                         </div>
-                    </section>
 
+                            <input 
+                                    type="text" 
+                                    id="search-input"
+                                    class="form__input"
+                                    placeholder="Buscar entrenamiento..."
+                                    style="margin-top: 10px;"
+                            >
+                            
+                    </section>
+  
                     <!-- SECCIÓN: Lista de entrenamientos -->
                     <section class="workouts-section">
                         <h2 class="workouts-section__title">Mis Entrenamientos</h2>
-                        
+ 
+                        <div class="categories" style="margin-top: 10px;">
+                            <button 
+                                class="category-button"
+                                onclick="completeAll()"
+                            >
+                                ✅ Completar todo
+                            </button>
+
+                            <button 
+                                class="category-button"
+                                onclick="deleteCompleted()"
+                            >
+                                🗑️ Eliminar completados
+                            </button>
+                        </div>                        
+
                         <ul class="workout-list" id="workout-list">
                             <!-- Entrenamiento completado -->
                             <li class="workout-item workout-item--pull workout-item--completed">
