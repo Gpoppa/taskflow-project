@@ -25,7 +25,7 @@
   
   /* Neutrales */
   --color-white: #ffffff;
-  --color-background: #fef7f4;
+  --color-background: #f0ebe6;
   --color-card: #ffffff;
   --color-text: #1f2937;
   --color-text-muted: #6b7280;
@@ -308,12 +308,19 @@ body {
   color: var(--color-white);
 }
 
+.category-button--active {
+  background-color: #1f2937;
+  border-color: #1f2937;
+  color: white;
+}
+
 /* --- Lista de Entrenamientos --- */
 .workout-list {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
 }
 
 .workout-item {
@@ -326,6 +333,10 @@ body {
   border-left: 4px solid transparent;
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-base);
+}
+
+.workout-item__name {
+  cursor: pointer;
 }
 
 .workout-item:hover {
@@ -642,4 +653,128 @@ body {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* === DARK MODE  === */
+
+.dark body {
+  background-color: #0f172a;
+}
+
+.dark .app {
+  background-color: #0f172a;
+}
+
+.dark .form-section,
+.dark .categories-section,
+.dark .workouts-section {
+  background-color: #1e293b;
+}
+
+.dark .stat-card--orange {
+  background: linear-gradient(135deg, #431407 0%, #7c2d12 100%);
+  border-color: #9a3412;
+}
+
+.dark .stat-card--green {
+  background: linear-gradient(135deg, #052e16 0%, #14532d 100%);
+  border-color: #166534;
+}
+
+.dark .stat-card--blue {
+  background: linear-gradient(135deg, #172554 0%, #1e3a8a 100%);
+  border-color: #1d4ed8;
+}
+
+.dark .form-section__title,
+.dark .categories-section__title,
+.dark .workouts-section__title {
+  color: #f9fafb;
+}
+
+.dark .category-button {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark .workout-item {
+  background-color: #374151;
+}
+
+.dark .workout-item__name {
+  color: #f9fafb;
+}
+
+.dark .sidebar__title {
+  color: #f9fafb;
+}
+
+.dark .stat-card__title,
+.dark .stat-card__number,
+.dark .stat-card__count {
+  color: #f9fafb;
+}
+
+.dark .stat-card__label,
+.dark .stat-card__detail,
+.dark .workout-item__muscle {
+  color: #94a3b8;
+}
+
+/* Box Esta semana e Meta semanal */
+.dark .stat-card {
+  background-color: #1e293b;
+}
+
+.dark .stat-card__list-item {
+  border-color: #334155;
+}
+
+.dark .progress-bar {
+  background-color: #334155;
+}
+
+/* Header */
+.dark .header {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
+
+/* Footer */
+.dark .footer {
+  background-color: #020617;
+  border-top: 1px solid #1e293b;
+}
+
+.dark .footer__brand {
+  color: #f1f5f9;
+}
+
+.dark .footer__description {
+  color: #64748b;
+}
+
+/* Bottone Añadir */
+.dark .form__button {
+  background-color: #f97316;
+}
+
+.dark .form__button:hover {
+  background-color: #ea580c;
+}
+
+/* Categorie custom — fallback colore */
+.badge:not(.badge--push):not(.badge--pull):not(.badge--legs) {
+    background-color: #ede9fe;
+    color: #7c3aed;
+}
+
+.workout-item:not(.workout-item--push):not(.workout-item--pull):not(.workout-item--legs) {
+    border-left-color: #8b5cf6;
+}
+
+.dark .badge:not(.badge--push):not(.badge--pull):not(.badge--legs) {
+    background-color: #4c1d95;
+    color: #ddd6fe;
 }

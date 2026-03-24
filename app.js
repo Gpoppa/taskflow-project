@@ -9,13 +9,28 @@
 
 const STORAGE_KEY = 'taskflow_workouts';
 const WEEKLY_GOAL = 12;
-
+const CATEGORIES_KEY = 'taskflow_categories';
 // Categorías disponibles con sus configuraciones
-const CATEGORIES = {
+const DEFAULT_CATEGORIES = {
     push: { emoji: '💪', label: 'Push', muscle: 'Pecho/Hombros' },
     pull: { emoji: '🔥', label: 'Pull', muscle: 'Espalda' },
     legs: { emoji: '🦵', label: 'Legs', muscle: 'Piernas' }
 };
+
+let CATEGORIES = loadCategories();
+
+function loadCategories() {
+    try {
+        const data = localStorage.getItem(CATEGORIES_KEY);
+        return data ? JSON.parse(data) : { ...DEFAULT_CATEGORIES };
+    } catch {
+        return { ...DEFAULT_CATEGORIES };
+    }
+}
+
+function saveCategories() {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(CATEGORIES));
+}
 
 // Estado de la aplicación
 let workouts = [];
@@ -32,7 +47,7 @@ let statusFilter = 'all'; // 'all', 'completed', 'pending'
  * @returns {string} ID único basado en timestamp
  */
 function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 /**
@@ -59,21 +74,19 @@ function detectCategory(title) {
     const titleLower = title.toLowerCase();
 
     // Ejercicios de Push
-    if (/press|pecho|push|flexion|hombro|tricep/i.test(titleLower)) {
+    if (/press|pecho|push|flexion|flexión|hombro|deltoid|tricep|trícep|dips|fondos|aperturas|fly|cruces|militar|arnold|elevacion|elevación|lateral|frontal|inclinado|declinado|paralelas|banca|bench|overhead|ohp|chest|shoulder|triceps/i.test(titleLower)) {
         return 'push';
     }
     // Ejercicios de Pull
-    if (/dominada|remo|pull|espalda|bicep|jalon/i.test(titleLower)) {
+    if (/dominada|remo|pull|espalda|bicep|bícep|jalon|jalón|polea|face.?pull|curl|martillo|hammer|chin.?up|pulldown|pullover|trapecio|lumbar|hiperextension|hiperextensión|deadlift|peso.?muerto|back|row|lat|rhomboid|romboide|encogimiento|shrug/i.test(titleLower)) {
         return 'pull';
     }
     // Ejercicios de Legs
-    if (/sentadilla|pierna|cuadricep|femoral|gluteo|zancada|leg/i.test(titleLower)) {
+    if (/sentadilla|squat|pierna|cuadricep|cuádricep|femoral|isquio|gluteo|glúteo|zancada|lunge|leg|pantorrilla|gemelo|calf|prensa|hack|rumana|sumo|búlgara|bulgara|hip.?thrust|abductor|aductor|extensi[oó]n|curl.?femoral|step.?up|cajón|cajon|abdomen|abdominal|plancha|plank|crunch|oblicuo|core|abs/i.test(titleLower)) {
         return 'legs';
     }
 
-    // Categoría aleatoria si no se detecta
-    const categories = Object.keys(CATEGORIES);
-    return categories[Math.floor(Math.random() * categories.length)];
+    return null;
 }
 
 // ============================================
@@ -114,8 +127,239 @@ function loadFromStorage() {
  * @param {string} title - Título del entrenamiento
  * @returns {Object} Nueva tarea creada
  */
-function createWorkout(title) {
-    const category = detectCategory(title);
+
+/**
+ * Mostra un modal per chiedere la categoria all'utente
+ * @param {string} title - Titolo dell'allenamento
+ * @returns {Promise<string>} Categoria scelta
+ */
+function askCategory(title) {
+    return new Promise((resolve) => {
+        // Crea overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+        `;
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const bgColor = isDark ? '#1e293b' : '#ffffff';
+        const textColor = isDark ? '#f9fafb' : '#1f2937';
+        const mutedColor = isDark ? '#94a3b8' : '#6b7280';
+
+        overlay.innerHTML = `
+            <div style="
+                background: ${bgColor}; color: ${textColor};
+                padding: 2rem; border-radius: 1rem;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                max-width: 360px; width: 90%; text-align: center;
+            ">
+                <p style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">
+                    ¿Qué categoría es?
+                </p>
+                <p style="font-size: 0.875rem; color: ${mutedColor}; margin-bottom: 1.5rem;">
+                    No reconocí "<strong>${escapeHTML(title)}</strong>"
+                </p>
+                <div id="cat-buttons" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    ${Object.entries(CATEGORIES).map(([key, cat]) => `
+                        <button data-cat="${key}" style="
+                            padding: 0.75rem; border-radius: 9999px; border: 2px solid ${cat.color || '#6b7280'};
+                            background: ${cat.colorLight || '#f3f4f6'}; color: ${cat.colorDark || '#374151'};
+                            font-weight: 600; cursor: pointer; font-size: 1rem;
+                        ">${cat.emoji} ${cat.label} — ${cat.muscle}</button>
+                    `).join('')}
+                    <button id="btn-new-cat" style="
+                        padding: 0.75rem; border-radius: 9999px; border: 2px dashed #94a3b8;
+                        background: transparent; color: ${mutedColor};
+                        font-weight: 600; cursor: pointer; font-size: 1rem;
+                    ">➕ Nueva categoría</button>
+                </div>
+            </div>
+        `;
+
+        overlay.querySelectorAll('[data-cat]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.body.removeChild(overlay);
+                resolve(btn.dataset.cat);
+            });
+        });
+
+        const btnNewCat = overlay.querySelector('#btn-new-cat');
+        if (btnNewCat) {
+            btnNewCat.addEventListener('click', async () => {
+                document.body.removeChild(overlay);
+                const newKey = await showNewCategoryForm();
+                if (newKey) resolve(newKey);
+                else resolve(Object.keys(CATEGORIES)[0]);
+            });
+        }
+
+        document.body.appendChild(overlay);
+    });
+}
+
+/**
+ * Mostra un form per creare una nuova categoria
+ * @returns {Promise<string|null>} Key della nuova categoria o null se annullato
+ */
+function showNewCategoryForm() {
+    return new Promise((resolve) => {
+        const isDark = document.documentElement.classList.contains('dark');
+        const bgColor = isDark ? '#1e293b' : '#ffffff';
+        const textColor = isDark ? '#f9fafb' : '#1f2937';
+        const inputBg = isDark ? '#374151' : '#f9fafb';
+        const borderColor = isDark ? '#4b5563' : '#e5e7eb';
+
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+        `;
+
+        overlay.innerHTML = `
+            <div style="
+                background: ${bgColor}; color: ${textColor};
+                padding: 2rem; border-radius: 1rem;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                max-width: 380px; width: 90%;
+            ">
+                <p style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; text-align:center;">
+                    ➕ Nueva Categoría
+                </p>
+
+                <div style="display:flex; flex-direction:column; gap: 0.75rem; margin-bottom: 1.25rem;">
+
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <label style="width:80px; font-size:0.875rem; font-weight:600;">Emoji</label>
+                        <input id="new-cat-emoji" maxlength="2" placeholder="🏋️" style="
+                            width: 60px; padding: 0.5rem; border-radius: 0.5rem; text-align:center;
+                            border: 2px solid ${borderColor}; background: ${inputBg}; color: ${textColor};
+                            font-size: 1.25rem;
+                        ">
+                    </div>
+
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <label style="width:80px; font-size:0.875rem; font-weight:600;">Nombre</label>
+                        <input id="new-cat-label" placeholder="Ej: Cardio" style="
+                            flex:1; padding: 0.5rem 0.75rem; border-radius: 0.5rem;
+                            border: 2px solid ${borderColor}; background: ${inputBg}; color: ${textColor};
+                            font-size: 1rem;
+                        ">
+                    </div>
+
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <label style="width:80px; font-size:0.875rem; font-weight:600;">Músculo</label>
+                        <input id="new-cat-muscle" placeholder="Ej: Corazón / Pulmones" style="
+                            flex:1; padding: 0.5rem 0.75rem; border-radius: 0.5rem;
+                            border: 2px solid ${borderColor}; background: ${inputBg}; color: ${textColor};
+                            font-size: 1rem;
+                        ">
+                    </div>
+
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <label style="width:80px; font-size:0.875rem; font-weight:600;">Color</label>
+                        <input id="new-cat-color" type="color" value="#8b5cf6" style="
+                            width: 48px; height: 36px; border-radius: 0.5rem;
+                            border: 2px solid ${borderColor}; cursor: pointer; padding: 2px;
+                        ">
+                    </div>
+
+                </div>
+
+                <div style="display:flex; gap:0.75rem;">
+                    <button id="btn-cancel-cat" style="
+                        flex:1; padding: 0.75rem; border-radius: 9999px;
+                        border: 2px solid ${borderColor}; background: transparent;
+                        color: ${textColor}; font-weight: 600; cursor: pointer;
+                    ">Cancelar</button>
+                    <button id="btn-save-cat" style="
+                        flex:1; padding: 0.75rem; border-radius: 9999px;
+                        border: none; background: #8b5cf6;
+                        color: white; font-weight: 600; cursor: pointer;
+                    ">Guardar</button>
+                </div>
+
+                <p id="new-cat-error" style="
+                    color: #ef4444; font-size: 0.8rem;
+                    text-align: center; margin-top: 0.75rem; display: none;
+                ">Por favor completa todos los campos.</p>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        overlay.querySelector('#btn-cancel-cat').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve(null);
+        });
+
+        overlay.querySelector('#btn-save-cat').addEventListener('click', () => {
+            const emoji  = overlay.querySelector('#new-cat-emoji').value.trim() || '🏋️';
+            const label  = overlay.querySelector('#new-cat-label').value.trim();
+            const muscle = overlay.querySelector('#new-cat-muscle').value.trim();
+            const color  = overlay.querySelector('#new-cat-color').value;
+
+            if (!label || !muscle) {
+                overlay.querySelector('#new-cat-error').style.display = 'block';
+                return;
+            }
+
+            // Genera una key dal label (minuscolo, senza spazi)
+            const key = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
+            // Calcola colori chiari/scuri dal colore scelto
+            CATEGORIES[key] = {
+                emoji,
+                label,
+                muscle,
+                color,
+                colorLight: color + '33',   // 20% opacità
+                colorDark: color
+            };
+
+            saveCategories();
+            renderCategoryButtons();
+            document.body.removeChild(overlay);
+            resolve(key);
+        });
+    });
+}
+
+/**
+ * Aggiorna dinamicamente i bottoni categoria nella sezione filtri
+ */
+function renderCategoryButtons() {
+    const container = document.querySelector('.categories[role="group"]');
+    if (!container) return;
+
+    container.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => `
+        <button
+            type="button"
+            class="category-button category-button--${key}"
+            data-category="${key}"
+            style="border-color: ${cat.color || ''};"
+        >
+            ${cat.emoji} ${cat.label} (<span class="category-button__count">0</span>)
+        </button>
+    `).join('');
+
+    // Ri-attacca i listener
+    container.querySelectorAll('.category-button').forEach(button => {
+        button.addEventListener('click', () => {
+            filterByCategory(button.dataset.category);
+        });
+    });
+
+    render();
+}
+
+async function createWorkout(title) {
+    let category = detectCategory(title);
+    if (category === null) {
+        category = await askCategory(title);
+    }
 
     return {
         id: generateId(),
@@ -130,11 +374,11 @@ function createWorkout(title) {
  * Añade un nuevo entrenamiento a la lista
  * @param {string} title - Título del entrenamiento
  */
-function addWorkout(title) {
+async function addWorkout(title) {
     if (!title || !title.trim()) return;
 
-    const workout = createWorkout(title);
-    workouts.unshift(workout); // Añadir al principio
+    const workout = await createWorkout(title);
+    workouts.unshift(workout);
     saveToStorage();
     render();
 }
@@ -162,8 +406,9 @@ function deleteWorkout(id) {
     render();
 }
 
-function completeAll() {
-    workouts.forEach(w => w.completed = true);
+function toggleCompleteAll() {
+    const allCompleted = workouts.every(w => w.completed);
+    workouts.forEach(w => w.completed = !allCompleted);
     saveToStorage();
     render();
 }
@@ -178,13 +423,38 @@ function editWorkout(id) {
     const workout = workouts.find(w => w.id === id);
     if (!workout) return;
 
-    const newTitle = prompt("Nuevo título:", workout.title);
+    const span = document.querySelector(`[data-id="${id}"] .workout-item__name`);
+    if (!span) return;
 
-    if (newTitle && newTitle.trim()) {
-        workout.title = newTitle.trim();
-        saveToStorage();
+    const isDark = document.documentElement.classList.contains('dark');
+
+    const input = document.createElement('input');
+    input.value = workout.title;
+    input.className = 'form__input';
+    input.style.padding = '2px 8px';
+    input.style.backgroundColor = isDark ? '#374151' : '#ffffff';
+    input.style.color = isDark ? '#f9fafb' : '#1f2937';
+    input.style.borderColor = isDark ? '#4b5563' : '#e5e7eb';
+    span.replaceWith(input);
+    input.focus();
+
+    let saved = false;
+
+    function save() {
+        if (saved) return;
+        saved = true;
+        if (input.value.trim()) {
+            workout.title = input.value.trim();
+            saveToStorage();
+        }
         render();
     }
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') save();
+        if (e.key === 'Escape') { saved = true; render(); }
+    });
 }
 /**
  * Filtra entrenamientos por categoría
@@ -192,6 +462,11 @@ function editWorkout(id) {
  */
 function filterByCategory(category) {
     activeFilter = activeFilter === category ? null : category;
+    render();
+}
+
+function setFilter(filter) {
+    statusFilter = filter;
     render();
 }
 
@@ -207,7 +482,7 @@ function calculateStats() {
     const total = workouts.length;
     const completed = workouts.filter(w => w.completed).length;
     const pending = total - completed;
-    const percentage = total > 0 ? Math.round((completed / WEEKLY_GOAL) * 100) : 0;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     // Conteo por categorías
     const byCategory = {
@@ -255,7 +530,7 @@ function createWorkoutHTML(workout) {
                 <span 
                     class="workout-item__name"
                     onclick="editWorkout('${workout.id}')"
-                    style="cursor: pointer;"
+
                 >
                     ${escapeHTML(workout.title)}
                 </span>
@@ -370,7 +645,7 @@ function renderStats() {
 
     if (percentageEl) percentageEl.textContent = `${stats.percentage}%`;
     if (progressFill) progressFill.style.width = `${stats.percentage}%`;
-    if (detailEl) detailEl.textContent = `${stats.completed} de ${WEEKLY_GOAL} completados`;
+    if (detailEl) detailEl.textContent = `${stats.completed} de ${stats.total} completados`;
 
     // Actualizar contadores en botones de categoría
     updateCategoryButtons(stats.byCategory);
@@ -437,6 +712,19 @@ function capitalize(str) {
 function render() {
     renderWorkouts();
     renderStats();
+    updateFilterButtons();
+}
+
+function updateFilterButtons() {
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+        btn.classList.toggle('category-button--active', btn.dataset.filter === statusFilter);
+    });
+
+    const btnComplete = document.getElementById('btn-complete-all');
+    if (btnComplete && workouts.length > 0) {
+        const allCompleted = workouts.every(w => w.completed);
+        btnComplete.textContent = allCompleted ? '↩️ Deseleccionar todo' : '✅ Completar todo';
+    }
 }
 
 // ============================================
@@ -496,6 +784,7 @@ function init() {
     initEventListeners();
 
     // Renderizar inicial
+    renderCategoryButtons();
     render();
     loadDarkMode();
     console.log('✅ TaskFlow Gym inicializado correctamente');
@@ -513,7 +802,7 @@ const DARK_MODE_KEY = "taskflow_dark_mode";
 function toggleDarkMode() {
     const html = document.documentElement;
     const button = document.getElementById("dark-toggle");
-
+    if (!button) return;
     const isDark = html.classList.toggle("dark");
 
     // Salva in LocalStorage
@@ -530,7 +819,7 @@ function toggleDarkMode() {
 function loadDarkMode() {
     const html = document.documentElement;
     const button = document.getElementById("dark-toggle");
-
+    if (!button) return;
     const isDark = localStorage.getItem("taskflow_dark_mode") === "true";
 
     if (isDark) {
