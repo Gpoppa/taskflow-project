@@ -28,7 +28,6 @@
     <div class="flex justify-center mt-3">
         <button 
             id="dark-toggle"
-            onclick="toggleDarkMode()"
             class="px-4 py-2 rounded-full bg-gray-200 dark:bg-gray-700 text-black dark:text-white shadow-md transition"
         >
             🌙 Dark Mode
@@ -66,7 +65,12 @@
 
                     <!-- SECCIÓN: Categorías -->
                     <section class="categories-section">
-                        <h2 class="categories-section__title">Categorías de Entrenamiento</h2>
+                        <div class="categories-section__header">
+                            <h2 class="categories-section__title">Categorías de Entrenamiento</h2>
+                            <button type="button" id="btn-manage-categories" class="category-manage-btn">
+                                🗂️ Eliminar categorías
+                            </button>
+                        </div>
                         
                         <div class="categories" role="group" aria-label="Filtrar por categoría">
                             <button 
@@ -110,39 +114,43 @@
                         <div class="categories" style="margin-top: 10px;">
 
                             <!-- FILTROS -->
+                            <!-- Eliminato onclick inline: ora usa listener con data-filter -->
                             <button 
-                                class="category-button"
-                                onclick="setFilter('all')"
+                                class="category-button status-filter-btn"
+                                data-filter="all"
                             >
                                 📋 Todas
                             </button>
 
+                            <!-- Eliminato onclick inline: ora usa listener con data-filter -->
                             <button 
-                                class="category-button"
-                                onclick="setFilter('pending')"
+                                class="category-button status-filter-btn"
+                                data-filter="pending"
                             >
                                 ⏳ Pendientes
                             </button>
 
+                            <!-- Eliminato onclick inline: ora usa listener con data-filter -->
                             <button 
-                                class="category-button"
-                                onclick="setFilter('completed')"
+                                class="category-button status-filter-btn"
+                                data-filter="completed"
                             >
                                 ✔ Completadas
                             </button>
 
                             <!-- AZIONI -->
+                            <!-- Eliminato onclick inline: ora gestito da listener su id -->
                             <button 
-                                class="category-button"
+                                class="category-button bulk-action-btn"
                                 id="btn-complete-all"
-                                onclick="toggleCompleteAll()"
                             >
                                 ✅ Completar todo
                             </button>
 
+                            <!-- Eliminato onclick inline: ora gestito da listener su id -->
                             <button 
-                                class="category-button"
-                                onclick="deleteCompleted()"
+                                class="category-button bulk-action-btn"
+                                id="btn-delete-completed"
                             >
                                 🗑️ Eliminar completados
                             </button>

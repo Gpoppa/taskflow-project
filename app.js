@@ -16,6 +16,12 @@ const DEFAULT_CATEGORIES = {
     pull: { emoji: '🔥', label: 'Pull', muscle: 'Espalda' },
     legs: { emoji: '🦵', label: 'Legs', muscle: 'Piernas' }
 };
+const DEFAULT_CATEGORY_KEYS = Object.keys(DEFAULT_CATEGORIES);
+const CATEGORY_EMOJIS = [
+    '🏋️', '💪', '🔥', '🦵', '🏃', '🚴', '🧘', '🤸', '🤾', '🏊',
+    '🥊', '🥋', '⚽', '🏀', '🏐', '🎾', '🏓', '⛹️', '🤺', '🪂',
+    '🧠', '❤️', '🎯', '⚡', '🌟', '🏔️', '🏆', '⏱️', '📈', '🔋'
+];
 
 let CATEGORIES = loadCategories();
 
@@ -30,6 +36,46 @@ function loadCategories() {
 
 function saveCategories() {
     localStorage.setItem(CATEGORIES_KEY, JSON.stringify(CATEGORIES));
+}
+
+function hexToRgb(hex) {
+    const normalized = hex.replace('#', '').trim();
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return null;
+    return {
+        r: parseInt(normalized.slice(0, 2), 16),
+        g: parseInt(normalized.slice(2, 4), 16),
+        b: parseInt(normalized.slice(4, 6), 16)
+    };
+}
+
+function rgbToHex({ r, g, b }) {
+    const clamp = (v) => Math.max(0, Math.min(255, Math.round(v)));
+    return `#${[clamp(r), clamp(g), clamp(b)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function mixHex(hexA, hexB, ratio = 0.5) {
+    const a = hexToRgb(hexA);
+    const b = hexToRgb(hexB);
+    if (!a || !b) return hexA;
+    const t = Math.max(0, Math.min(1, ratio));
+    return rgbToHex({
+        r: a.r * (1 - t) + b.r * t,
+        g: a.g * (1 - t) + b.g * t,
+        b: a.b * (1 - t) + b.b * t
+    });
+}
+
+function getCategoryTones(baseColor) {
+    return {
+        color: baseColor,
+        colorLight: mixHex(baseColor, '#ffffff', 0.82),
+        colorLighter: mixHex(baseColor, '#ffffff', 0.9),
+        colorBorder: mixHex(baseColor, '#000000', 0.2),
+        colorText: mixHex(baseColor, '#000000', 0.32),
+        colorActiveStart: mixHex(baseColor, '#000000', 0.08),
+        colorActiveEnd: mixHex(baseColor, '#000000', 0.16),
+        colorDarkText: mixHex(baseColor, '#ffffff', 0.92)
+    };
 }
 
 // Estado de la aplicación
@@ -174,6 +220,11 @@ function askCategory(title) {
                         background: transparent; color: ${mutedColor};
                         font-weight: 600; cursor: pointer; font-size: 1rem;
                     ">➕ Nueva categoría</button>
+                    <button id="btn-cancel-category" style="
+                        padding: 0.75rem; border-radius: 9999px; border: 2px solid ${mutedColor};
+                        background: transparent; color: ${textColor};
+                        font-weight: 600; cursor: pointer; font-size: 1rem;
+                    ">Cancelar</button>
                 </div>
             </div>
         `;
@@ -190,8 +241,15 @@ function askCategory(title) {
             btnNewCat.addEventListener('click', async () => {
                 document.body.removeChild(overlay);
                 const newKey = await showNewCategoryForm();
-                if (newKey) resolve(newKey);
-                else resolve(Object.keys(CATEGORIES)[0]);
+                resolve(newKey);
+            });
+        }
+
+        const btnCancelCategory = overlay.querySelector('#btn-cancel-category');
+        if (btnCancelCategory) {
+            btnCancelCategory.addEventListener('click', () => {
+                document.body.removeChild(overlay);
+                resolve(null);
             });
         }
 
@@ -233,11 +291,16 @@ function showNewCategoryForm() {
 
                     <div style="display:flex; gap:0.5rem; align-items:center;">
                         <label style="width:80px; font-size:0.875rem; font-weight:600;">Emoji</label>
-                        <input id="new-cat-emoji" maxlength="2" placeholder="🏋️" style="
-                            width: 60px; padding: 0.5rem; border-radius: 0.5rem; text-align:center;
+                        <select id="new-cat-emoji" size="6" style="
+                            width: 110px; padding: 0.5rem; border-radius: 0.5rem;
                             border: 2px solid ${borderColor}; background: ${inputBg}; color: ${textColor};
-                            font-size: 1.25rem;
+                            font-size: 1rem; cursor: pointer;
+                            height: 120px; overflow-y: auto;
                         ">
+                            ${CATEGORY_EMOJIS.map((emoji, index) => `
+                                <option value="${emoji}" ${index === 0 ? 'selected' : ''}>${emoji}</option>
+                            `).join('')}
+                        </select>
                     </div>
 
                     <div style="display:flex; gap:0.5rem; align-items:center;">
@@ -296,7 +359,7 @@ function showNewCategoryForm() {
         });
 
         overlay.querySelector('#btn-save-cat').addEventListener('click', () => {
-            const emoji  = overlay.querySelector('#new-cat-emoji').value.trim() || '🏋️';
+            const emoji  = overlay.querySelector('#new-cat-emoji').value || '🏋️';
             const label  = overlay.querySelector('#new-cat-label').value.trim();
             const muscle = overlay.querySelector('#new-cat-muscle').value.trim();
             const color  = overlay.querySelector('#new-cat-color').value;
@@ -310,13 +373,19 @@ function showNewCategoryForm() {
             const key = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
             // Calcola colori chiari/scuri dal colore scelto
+            const tones = getCategoryTones(color);
             CATEGORIES[key] = {
                 emoji,
                 label,
                 muscle,
                 color,
-                colorLight: color + '33',   // 20% opacità
-                colorDark: color
+                colorLight: tones.colorLight,
+                colorLighter: tones.colorLighter,
+                colorDark: tones.colorDarkText,
+                colorBorder: tones.colorBorder,
+                colorText: tones.colorText,
+                colorActiveStart: tones.colorActiveStart,
+                colorActiveEnd: tones.colorActiveEnd
             };
 
             saveCategories();
@@ -334,31 +403,161 @@ function renderCategoryButtons() {
     const container = document.querySelector('.categories[role="group"]');
     if (!container) return;
 
-    container.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => `
-        <button
-            type="button"
-            class="category-button category-button--${key}"
-            data-category="${key}"
-            style="border-color: ${cat.color || ''};"
-        >
-            ${cat.emoji} ${cat.label} (<span class="category-button__count">0</span>)
-        </button>
-    `).join('');
-
-    // Ri-attacca i listener
-    container.querySelectorAll('.category-button').forEach(button => {
-        button.addEventListener('click', () => {
-            filterByCategory(button.dataset.category);
-        });
-    });
+    container.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
+        const isCustom = !DEFAULT_CATEGORY_KEYS.includes(key);
+        const tones = cat.color
+            ? {
+                colorLighter: cat.colorLighter || mixHex(cat.color, '#ffffff', 0.9),
+                colorLight: cat.colorLight || mixHex(cat.color, '#ffffff', 0.82),
+                colorBorder: cat.colorBorder || mixHex(cat.color, '#000000', 0.2),
+                colorText: cat.colorText || mixHex(cat.color, '#000000', 0.32),
+                colorActiveStart: cat.colorActiveStart || mixHex(cat.color, '#000000', 0.08),
+                colorActiveEnd: cat.colorActiveEnd || mixHex(cat.color, '#000000', 0.16)
+            }
+            : null;
+        const customStyle = isCustom && tones ? `
+            --cat-bg-start: ${tones.colorLighter};
+            --cat-bg-end: ${tones.colorLight};
+            --cat-border: ${tones.colorBorder};
+            --cat-text: ${tones.colorText};
+            --cat-active-start: ${tones.colorActiveStart};
+            --cat-active-end: ${tones.colorActiveEnd};
+        ` : '';
+        return `
+            <div class="category-pill">
+                <button
+                    type="button"
+                    class="category-button category-button--${key} ${isCustom ? 'category-button--custom' : ''}"
+                    data-category="${key}"
+                    style="${customStyle}"
+                >
+                    ${cat.emoji} ${cat.label} (<span class="category-button__count">0</span>)
+                </button>
+            </div>
+        `;
+    }).join('');
+    // Eliminati listener duplicati qui: usiamo una sola delegazione in initEventListeners().
 
     render();
+}
+
+function deleteCategories(categoryKeys) {
+    const validKeys = categoryKeys.filter(key => CATEGORIES[key] && !DEFAULT_CATEGORY_KEYS.includes(key));
+    if (validKeys.length === 0) return;
+
+    const fallbackKey = DEFAULT_CATEGORY_KEYS.find(key => CATEGORIES[key]);
+    if (!fallbackKey) {
+        alert('No hay categorías por defecto disponibles para reasignar entrenamientos.');
+        return;
+    }
+
+    const workoutsToMove = workouts.filter(w => validKeys.includes(w.category)).length;
+    const fallbackLabel = CATEGORIES[fallbackKey].label;
+    const confirmMessage = workoutsToMove > 0
+        ? `Eliminar ${validKeys.length} categorías? ${workoutsToMove} entrenamientos se moverán a "${fallbackLabel}".`
+        : `Eliminar ${validKeys.length} categorías seleccionadas?`;
+
+    if (!confirm(confirmMessage)) return;
+
+    workouts = workouts.map(workout =>
+        validKeys.includes(workout.category)
+            ? { ...workout, category: fallbackKey }
+            : workout
+    );
+
+    validKeys.forEach(key => {
+        delete CATEGORIES[key];
+        if (activeFilter === key) activeFilter = null;
+    });
+
+    saveCategories();
+    saveToStorage();
+    renderCategoryButtons();
+    render();
+}
+
+function openDeleteCategoriesModal() {
+    const customEntries = Object.entries(CATEGORIES).filter(([key]) => !DEFAULT_CATEGORY_KEYS.includes(key));
+    if (customEntries.length === 0) {
+        alert('No hay categorías personalizadas para eliminar.');
+        return;
+    }
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const bgColor = isDark ? '#1e293b' : '#ffffff';
+    const textColor = isDark ? '#f9fafb' : '#1f2937';
+    const mutedColor = isDark ? '#94a3b8' : '#6b7280';
+    const borderColor = isDark ? '#475569' : '#e2e8f0';
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000;
+    `;
+
+    overlay.innerHTML = `
+        <div style="
+            background: ${bgColor}; color: ${textColor};
+            padding: 1.5rem; border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            max-width: 420px; width: 92%;
+        ">
+            <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem;">
+                Eliminar categorías
+            </p>
+            <p style="font-size: 0.875rem; color: ${mutedColor}; margin-bottom: 1rem;">
+                Selecciona las categorías personalizadas que quieres eliminar.
+            </p>
+            <div style="display:flex; flex-direction:column; gap: 0.5rem; max-height: 220px; overflow:auto; margin-bottom: 1rem;">
+                ${customEntries.map(([key, cat]) => `
+                    <label style="
+                        display:flex; align-items:center; gap:0.5rem; padding:0.6rem 0.75rem;
+                        border:1px solid ${borderColor}; border-radius:0.75rem;
+                    ">
+                        <input type="checkbox" data-del-cat="${key}">
+                        <span>${cat.emoji} ${escapeHTML(cat.label)}</span>
+                    </label>
+                `).join('')}
+            </div>
+            <div style="display:flex; gap:0.75rem;">
+                <button id="btn-cancel-del-cats" style="
+                    flex:1; padding:0.7rem; border-radius:9999px; border:1px solid ${borderColor};
+                    background: transparent; color:${textColor}; font-weight:600; cursor:pointer;
+                ">Cancelar</button>
+                <button id="btn-confirm-del-cats" style="
+                    flex:1; padding:0.7rem; border-radius:9999px; border:none;
+                    background: #dc2626; color:white; font-weight:700; cursor:pointer;
+                ">Eliminar seleccionadas</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#btn-cancel-del-cats').addEventListener('click', () => {
+        document.body.removeChild(overlay);
+    });
+
+    overlay.querySelector('#btn-confirm-del-cats').addEventListener('click', () => {
+        const selected = Array.from(overlay.querySelectorAll('[data-del-cat]:checked'))
+            .map(el => el.dataset.delCat);
+
+        if (selected.length === 0) {
+            alert('Selecciona al menos una categoría.');
+            return;
+        }
+
+        document.body.removeChild(overlay);
+        deleteCategories(selected);
+    });
 }
 
 async function createWorkout(title) {
     let category = detectCategory(title);
     if (category === null) {
         category = await askCategory(title);
+        if (category === null) return null;
     }
 
     return {
@@ -378,6 +577,7 @@ async function addWorkout(title) {
     if (!title || !title.trim()) return;
 
     const workout = await createWorkout(title);
+    if (!workout) return;
     workouts.unshift(workout);
     saveToStorage();
     render();
@@ -485,11 +685,10 @@ function calculateStats() {
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     // Conteo por categorías
-    const byCategory = {
-        push: workouts.filter(w => w.category === 'push').length,
-        pull: workouts.filter(w => w.category === 'pull').length,
-        legs: workouts.filter(w => w.category === 'legs').length
-    };
+    const byCategory = Object.keys(CATEGORIES).reduce((acc, key) => {
+        acc[key] = workouts.filter(w => w.category === key).length;
+        return acc;
+    }, {});
 
     return {
         total,
@@ -513,9 +712,20 @@ function createWorkoutHTML(workout) {
     const category = CATEGORIES[workout.category];
     const completedClass = workout.completed ? 'workout-item--completed' : '';
     const checkedAttr = workout.completed ? 'checked' : '';
+    const isCustom = category && !DEFAULT_CATEGORY_KEYS.includes(workout.category);
+    const customItemBorder = isCustom && category.color
+        ? `style="border-left-color: ${category.colorBorder || mixHex(category.color, '#000000', 0.2)};"`
+        : '';
+    const customBadgeStyle = isCustom && category.color
+        ? `style="
+            background: linear-gradient(135deg, ${category.colorLighter || mixHex(category.color, '#ffffff', 0.9)} 0%, ${category.colorLight || mixHex(category.color, '#ffffff', 0.82)} 100%);
+            color: ${category.colorText || mixHex(category.color, '#000000', 0.32)};
+            border: 1px solid ${category.colorBorder || mixHex(category.color, '#000000', 0.2)};
+        "`
+        : '';
 
     return `
-        <li class="workout-item workout-item--${workout.category} ${completedClass}" data-id="${workout.id}">
+        <li class="workout-item workout-item--${workout.category} ${completedClass}" data-id="${workout.id}" ${customItemBorder}>
             <label class="workout-item__checkbox-label">
                 <input
                     type="checkbox"
@@ -535,7 +745,7 @@ function createWorkoutHTML(workout) {
                     ${escapeHTML(workout.title)}
                 </span>
                 <div class="workout-item__meta">
-                    <span class="badge badge--${workout.category}">${category.emoji} ${category.label.toUpperCase()}</span>
+                    <span class="badge badge--${workout.category}" ${customBadgeStyle}>${category.emoji} ${category.label.toUpperCase()}</span>
                     <span class="workout-item__muscle">${category.muscle}</span>
                 </div>
             </div>
@@ -622,21 +832,26 @@ function renderStats() {
     const pendingEl = document.querySelector('.stat-card--blue .stat-card__number');
     if (pendingEl) pendingEl.textContent = stats.pending;
 
-    // Estadísticas por categoría
-    const categoryItems = document.querySelectorAll('.stat-card__list-item');
-    categoryItems.forEach(item => {
-        const badge = item.querySelector('.badge');
-        const count = item.querySelector('.stat-card__count');
-        if (badge && count) {
-            if (badge.classList.contains('badge--push')) {
-                count.textContent = stats.byCategory.push;
-            } else if (badge.classList.contains('badge--pull')) {
-                count.textContent = stats.byCategory.pull;
-            } else if (badge.classList.contains('badge--legs')) {
-                count.textContent = stats.byCategory.legs;
-            }
-        }
-    });
+    // Eliminato blocco hardcoded push/pull/legs: ora supporta categorie dinamiche.
+    const categoryList = document.querySelector('.stat-card__list');
+    if (categoryList) {
+        categoryList.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
+            const isCustom = !DEFAULT_CATEGORY_KEYS.includes(key);
+            const customBadgeStyle = isCustom && cat.color
+                ? `style="
+                    background: linear-gradient(135deg, ${cat.colorLighter || mixHex(cat.color, '#ffffff', 0.9)} 0%, ${cat.colorLight || mixHex(cat.color, '#ffffff', 0.82)} 100%);
+                    color: ${cat.colorText || mixHex(cat.color, '#000000', 0.32)};
+                    border: 1px solid ${cat.colorBorder || mixHex(cat.color, '#000000', 0.2)};
+                "`
+                : '';
+            return `
+                <li class="stat-card__list-item">
+                    <span class="badge badge--${key}" ${customBadgeStyle}>${cat.emoji} ${cat.label}</span>
+                    <span class="stat-card__count">${stats.byCategory[key] ?? 0}</span>
+                </li>
+            `;
+        }).join('');
+    }
 
     // Barra de progreso
     const percentageEl = document.querySelector('.stat-card__percentage');
@@ -749,13 +964,45 @@ function initEventListeners() {
         });
     }
 
-    // Botones de categoría
-    document.querySelectorAll('.category-button').forEach(button => {
+    // Eliminato listener generico su ".category-button": causava click ambiguo su filtri/azioni.
+    // Botones de categoría (delegación para soportar categorías dinámicas)
+    const categoryContainer = document.querySelector('.categories[role="group"]');
+    if (categoryContainer) {
+        categoryContainer.addEventListener('click', (e) => {
+            const button = e.target.closest('[data-category]');
+            if (!button) return;
+            filterByCategory(button.dataset.category);
+        });
+    }
+
+    // Filtri stato
+    document.querySelectorAll('[data-filter]').forEach(button => {
         button.addEventListener('click', () => {
-            const category = button.dataset.category;
-            filterByCategory(category);
+            setFilter(button.dataset.filter);
         });
     });
+
+    // Azioni massive
+    const completeAllBtn = document.getElementById('btn-complete-all');
+    if (completeAllBtn) {
+        completeAllBtn.addEventListener('click', toggleCompleteAll);
+    }
+
+    const deleteCompletedBtn = document.getElementById('btn-delete-completed');
+    if (deleteCompletedBtn) {
+        deleteCompletedBtn.addEventListener('click', deleteCompleted);
+    }
+
+    // Dark mode (eliminato onclick inline in HTML)
+    const darkToggleBtn = document.getElementById('dark-toggle');
+    if (darkToggleBtn) {
+        darkToggleBtn.addEventListener('click', toggleDarkMode);
+    }
+
+    const manageCategoriesBtn = document.getElementById('btn-manage-categories');
+    if (manageCategoriesBtn) {
+        manageCategoriesBtn.addEventListener('click', openDeleteCategoriesModal);
+    }
     // Buscador
     const searchInput = document.getElementById("search-input");
     if (searchInput) {

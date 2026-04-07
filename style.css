@@ -211,6 +211,39 @@ body {
   margin-bottom: var(--spacing-md);
 }
 
+.categories-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.categories-section__header .categories-section__title {
+  margin-bottom: 0;
+}
+
+.category-manage-btn {
+  border: 2px solid #475569;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #334155;
+  border-radius: var(--border-radius-full);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-base), color var(--transition-base);
+}
+
+.category-manage-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.category-manage-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
 /* --- Formulario --- */
 .form__group {
   display: flex;
@@ -277,41 +310,125 @@ body {
   border-radius: var(--border-radius-full);
   background: var(--color-white);
   cursor: pointer;
-  transition: all var(--transition-base);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base);
   flex: 1;
   line-height: 1;
 }
 
 .category-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .category-button--push.category-button--active,
 .category-button--push:hover {
-  background-color: var(--color-push);
-  border-color: var(--color-push);
-  color: var(--color-white);
+  background: linear-gradient(135deg, #eff6ff 0%, var(--color-push-light) 100%);
+  border-color: #1d4ed8;
+  color: #1e3a8a;
 }
 
 .category-button--pull.category-button--active,
 .category-button--pull:hover {
-  background-color: var(--color-pull);
-  border-color: var(--color-pull);
-  color: var(--color-white);
+  background: linear-gradient(135deg, #fff7ed 0%, var(--color-pull-light) 100%);
+  border-color: #c2410c;
+  color: #9a3412;
 }
 
 .category-button--legs.category-button--active,
 .category-button--legs:hover {
-  background-color: var(--color-legs);
-  border-color: var(--color-legs);
-  color: var(--color-white);
+  background: linear-gradient(135deg, #f0fdf4 0%, var(--color-legs-light) 100%);
+  border-color: #15803d;
+  color: #166534;
+}
+
+.category-button--push:active {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  border-color: #1e3a8a;
+  color: #ffffff;
+}
+
+.category-button--pull:active {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  border-color: #9a3412;
+  color: #ffffff;
+}
+
+.category-button--legs:active {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  border-color: #166534;
+  color: #ffffff;
 }
 
 .category-button--active {
   background-color: #1f2937;
   border-color: #1f2937;
   color: white;
+}
+
+.category-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.category-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+  min-width: 180px;
+}
+
+.category-pill .category-button {
+  flex: 1;
+}
+
+.category-button--custom:hover,
+.category-button--custom.category-button--active {
+  background: linear-gradient(135deg, var(--cat-bg-start) 0%, var(--cat-bg-end) 100%);
+  border-color: var(--cat-border);
+  color: var(--cat-text);
+}
+
+.category-button--custom:active {
+  background: linear-gradient(135deg, var(--cat-active-start) 0%, var(--cat-active-end) 100%);
+  border-color: var(--cat-border);
+  color: #ffffff;
+}
+
+/* Filtri e azioni massive: identici visualmente */
+.status-filter-btn,
+.bulk-action-btn {
+  font-weight: 600;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: #475569;
+  color: #334155;
+}
+
+.status-filter-btn[data-filter="all"] {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: #475569;
+  color: #334155;
+}
+
+.status-filter-btn[data-filter="pending"],
+.status-filter-btn[data-filter="completed"] {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: #475569;
+  color: #334155;
+}
+
+.status-filter-btn:hover,
+.bulk-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.status-filter-btn:active,
+.bulk-action-btn:active {
+  transform: translateY(0) scale(0.98);
+  background: linear-gradient(135deg, #526174 0%, #475569 100%);
+  border-color: #334155;
+  color: #ffffff;
 }
 
 /* --- Lista de Entrenamientos --- */
@@ -696,6 +813,120 @@ body {
   background-color: #374151;
   border-color: #4b5563;
   color: #f9fafb;
+}
+
+.dark .category-manage-btn {
+  border-color: #94a3b8;
+  background: linear-gradient(135deg, #1f2937 0%, #334155 100%);
+  color: #e2e8f0;
+}
+
+.dark .category-manage-btn:hover {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  color: #f8fafc;
+}
+
+/* In dark mode usiamo fondi piu' scuri e testo leggibile */
+.dark .category-button--push.category-button--active,
+.dark .category-button--push:hover {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+  border-color: #60a5fa;
+  color: #eff6ff;
+}
+
+.dark .category-button--pull.category-button--active,
+.dark .category-button--pull:hover {
+  background: linear-gradient(135deg, #9a3412 0%, #c2410c 100%);
+  border-color: #fb923c;
+  color: #fff7ed;
+}
+
+.dark .category-button--legs.category-button--active,
+.dark .category-button--legs:hover {
+  background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+  border-color: #4ade80;
+  color: #f0fdf4;
+}
+
+.dark .category-button--push:active {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  border-color: #93c5fd;
+  color: #ffffff;
+}
+
+.dark .category-button--pull:active {
+  background: linear-gradient(135deg, #9a3412 0%, #b45309 100%);
+  border-color: #fdba74;
+  color: #ffffff;
+}
+
+.dark .category-button--legs:active {
+  background: linear-gradient(135deg, #166534 0%, #14532d 100%);
+  border-color: #86efac;
+  color: #ffffff;
+}
+
+.dark .status-filter-btn[data-filter="all"] {
+  background: linear-gradient(135deg, #1f2937 0%, #334155 100%);
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+
+.dark .status-filter-btn[data-filter="pending"],
+.dark .status-filter-btn[data-filter="completed"] {
+  background: linear-gradient(135deg, #1f2937 0%, #334155 100%);
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+
+/* Click feedback in dark mode for all action/filter/category buttons */
+.dark .category-button:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.08);
+}
+
+.dark .category-button--custom:hover,
+.dark .category-button--custom.category-button--active {
+  background: linear-gradient(135deg, var(--cat-active-start) 0%, var(--cat-active-end) 100%);
+  border-color: var(--cat-border);
+  color: #f8fafc;
+}
+
+.dark .category-button--custom:active {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-color: #94a3b8;
+  color: #ffffff;
+}
+
+.dark .form__button:active {
+  transform: translateY(0) scale(0.98);
+  filter: brightness(1.08);
+}
+
+.dark .workout-item__delete:active {
+  transform: scale(0.95);
+  color: #f87171;
+}
+
+.dark .bulk-action-btn#btn-complete-all,
+.dark .bulk-action-btn#btn-delete-completed {
+  background: linear-gradient(135deg, #1f2937 0%, #334155 100%);
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+
+.dark .status-filter-btn:hover,
+.dark .bulk-action-btn:hover {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  color: #f1f5f9;
+}
+
+.dark .status-filter-btn:active,
+.dark .bulk-action-btn:active {
+  transform: translateY(0) scale(0.98);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-color: #94a3b8;
+  color: #ffffff;
 }
 
 .dark .workout-item {
