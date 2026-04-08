@@ -7,35 +7,35 @@
 // ESTADO Y CONFIGURACIÓN
 // ============================================
 
-const STORAGE_KEY = 'taskflow_workouts';
-const WEEKLY_GOAL = 12;
-const CATEGORIES_KEY = 'taskflow_categories';
+const CLAVE_ALMACENAMIENTO = 'taskflow_workouts';
+const META_SEMANAL = 12;
+const CLAVE_CATEGORIAS = 'taskflow_categories';
 // Categorías disponibles con sus configuraciones
-const DEFAULT_CATEGORIES = {
+const CATEGORIAS_POR_DEFECTO = {
     push: { emoji: '💪', label: 'Push', muscle: 'Pecho/Hombros' },
     pull: { emoji: '🔥', label: 'Pull', muscle: 'Espalda' },
     legs: { emoji: '🦵', label: 'Legs', muscle: 'Piernas' }
 };
-const DEFAULT_CATEGORY_KEYS = Object.keys(DEFAULT_CATEGORIES);
-const CATEGORY_EMOJIS = [
+const CLAVES_CATEGORIAS_POR_DEFECTO = Object.keys(CATEGORIAS_POR_DEFECTO);
+const EMOJIS_CATEGORIA = [
     '🏋️', '💪', '🔥', '🦵', '🏃', '🚴', '🧘', '🤸', '🤾', '🏊',
     '🥊', '🥋', '⚽', '🏀', '🏐', '🎾', '🏓', '⛹️', '🤺', '🪂',
     '🧠', '❤️', '🎯', '⚡', '🌟', '🏔️', '🏆', '⏱️', '📈', '🔋'
 ];
 
-let CATEGORIES = loadCategories();
+let categorias = cargarCategorias();
 
-function loadCategories() {
+function cargarCategorias() {
     try {
-        const data = localStorage.getItem(CATEGORIES_KEY);
-        return data ? JSON.parse(data) : { ...DEFAULT_CATEGORIES };
+        const data = localStorage.getItem(CLAVE_CATEGORIAS);
+        return data ? JSON.parse(data) : { ...CATEGORIAS_POR_DEFECTO };
     } catch {
-        return { ...DEFAULT_CATEGORIES };
+        return { ...CATEGORIAS_POR_DEFECTO };
     }
 }
 
-function saveCategories() {
-    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(CATEGORIES));
+function guardarCategorias() {
+    localStorage.setItem(CLAVE_CATEGORIAS, JSON.stringify(categorias));
 }
 
 function hexToRgb(hex) {
@@ -79,10 +79,10 @@ function getCategoryTones(baseColor) {
 }
 
 // Estado de la aplicación
-let workouts = [];
-let activeFilter = null;
-let searchText = '';
-let statusFilter = 'all'; // 'all', 'completed', 'pending'
+let entrenamientos = [];
+let filtroCategoriaActivo = null;
+let textoBusqueda = '';
+let filtroEstado = 'all'; // 'all', 'completed', 'pending'
 
 // ============================================
 // UTILIDADES - FUNCIONES REUTILIZABLES
@@ -144,7 +144,7 @@ function detectCategory(title) {
  */
 function saveToStorage() {
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(workouts));
+        localStorage.setItem(CLAVE_ALMACENAMIENTO, JSON.stringify(entrenamientos));
     } catch (error) {
         console.error('Error al guardar en LocalStorage:', error);
     }
@@ -156,7 +156,7 @@ function saveToStorage() {
  */
 function loadFromStorage() {
     try {
-        const data = localStorage.getItem(STORAGE_KEY);
+        const data = localStorage.getItem(CLAVE_ALMACENAMIENTO);
         return data ? JSON.parse(data) : [];
     } catch (error) {
         console.error('Error al cargar desde LocalStorage:', error);
@@ -175,9 +175,9 @@ function loadFromStorage() {
  */
 
 /**
- * Mostra un modal per chiedere la categoria all'utente
- * @param {string} title - Titolo dell'allenamento
- * @returns {Promise<string>} Categoria scelta
+ * Muestra un modal para pedir la categoría al usuario
+ * @param {string} title - Título del entrenamiento
+ * @returns {Promise<string|null>} Categoría elegida o null si se cancela
  */
 function askCategory(title) {
     return new Promise((resolve) => {
@@ -208,7 +208,7 @@ function askCategory(title) {
                     No reconocí "<strong>${escapeHTML(title)}</strong>"
                 </p>
                 <div id="cat-buttons" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    ${Object.entries(CATEGORIES).map(([key, cat]) => `
+                    ${Object.entries(categorias).map(([key, cat]) => `
                         <button data-cat="${key}" style="
                             padding: 0.75rem; border-radius: 9999px; border: 2px solid ${cat.color || '#6b7280'};
                             background: ${cat.colorLight || '#f3f4f6'}; color: ${cat.colorDark || '#374151'};
@@ -258,8 +258,8 @@ function askCategory(title) {
 }
 
 /**
- * Mostra un form per creare una nuova categoria
- * @returns {Promise<string|null>} Key della nuova categoria o null se annullato
+ * Muestra un formulario para crear una nueva categoría
+ * @returns {Promise<string|null>} Clave de la nueva categoría o null si se cancela
  */
 function showNewCategoryForm() {
     return new Promise((resolve) => {
@@ -297,7 +297,7 @@ function showNewCategoryForm() {
                             font-size: 1rem; cursor: pointer;
                             height: 120px; overflow-y: auto;
                         ">
-                            ${CATEGORY_EMOJIS.map((emoji, index) => `
+                            ${EMOJIS_CATEGORIA.map((emoji, index) => `
                                 <option value="${emoji}" ${index === 0 ? 'selected' : ''}>${emoji}</option>
                             `).join('')}
                         </select>
@@ -369,12 +369,12 @@ function showNewCategoryForm() {
                 return;
             }
 
-            // Genera una key dal label (minuscolo, senza spazi)
+            // Genera una clave desde el nombre (minúsculas y sin espacios)
             const key = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
-            // Calcola colori chiari/scuri dal colore scelto
+            // Calcula tonos claros/oscuros desde el color seleccionado
             const tones = getCategoryTones(color);
-            CATEGORIES[key] = {
+            categorias[key] = {
                 emoji,
                 label,
                 muscle,
@@ -388,7 +388,7 @@ function showNewCategoryForm() {
                 colorActiveEnd: tones.colorActiveEnd
             };
 
-            saveCategories();
+            guardarCategorias();
             renderCategoryButtons();
             document.body.removeChild(overlay);
             resolve(key);
@@ -397,14 +397,14 @@ function showNewCategoryForm() {
 }
 
 /**
- * Aggiorna dinamicamente i bottoni categoria nella sezione filtri
+ * Actualiza dinámicamente los botones de categoría en la sección de filtros
  */
 function renderCategoryButtons() {
     const container = document.querySelector('.categories[role="group"]');
     if (!container) return;
 
-    container.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
-        const isCustom = !DEFAULT_CATEGORY_KEYS.includes(key);
+    container.innerHTML = Object.entries(categorias).map(([key, cat]) => {
+        const isCustom = !CLAVES_CATEGORIAS_POR_DEFECTO.includes(key);
         const tones = cat.color
             ? {
                 colorLighter: cat.colorLighter || mixHex(cat.color, '#ffffff', 0.9),
@@ -442,42 +442,42 @@ function renderCategoryButtons() {
 }
 
 function deleteCategories(categoryKeys) {
-    const validKeys = categoryKeys.filter(key => CATEGORIES[key] && !DEFAULT_CATEGORY_KEYS.includes(key));
+    const validKeys = categoryKeys.filter(key => categorias[key] && !CLAVES_CATEGORIAS_POR_DEFECTO.includes(key));
     if (validKeys.length === 0) return;
 
-    const fallbackKey = DEFAULT_CATEGORY_KEYS.find(key => CATEGORIES[key]);
+    const fallbackKey = CLAVES_CATEGORIAS_POR_DEFECTO.find(key => categorias[key]);
     if (!fallbackKey) {
         alert('No hay categorías por defecto disponibles para reasignar entrenamientos.');
         return;
     }
 
-    const workoutsToMove = workouts.filter(w => validKeys.includes(w.category)).length;
-    const fallbackLabel = CATEGORIES[fallbackKey].label;
-    const confirmMessage = workoutsToMove > 0
-        ? `Eliminar ${validKeys.length} categorías? ${workoutsToMove} entrenamientos se moverán a "${fallbackLabel}".`
+    const entrenamientosAMover = entrenamientos.filter(w => validKeys.includes(w.category)).length;
+    const etiquetaCategoriaDestino = categorias[fallbackKey].label;
+    const confirmMessage = entrenamientosAMover > 0
+        ? `Eliminar ${validKeys.length} categorías? ${entrenamientosAMover} entrenamientos se moverán a "${etiquetaCategoriaDestino}".`
         : `Eliminar ${validKeys.length} categorías seleccionadas?`;
 
     if (!confirm(confirmMessage)) return;
 
-    workouts = workouts.map(workout =>
+    entrenamientos = entrenamientos.map(workout =>
         validKeys.includes(workout.category)
             ? { ...workout, category: fallbackKey }
             : workout
     );
 
     validKeys.forEach(key => {
-        delete CATEGORIES[key];
-        if (activeFilter === key) activeFilter = null;
+        delete categorias[key];
+        if (filtroCategoriaActivo === key) filtroCategoriaActivo = null;
     });
 
-    saveCategories();
+    guardarCategorias();
     saveToStorage();
     renderCategoryButtons();
     render();
 }
 
 function openDeleteCategoriesModal() {
-    const customEntries = Object.entries(CATEGORIES).filter(([key]) => !DEFAULT_CATEGORY_KEYS.includes(key));
+    const customEntries = Object.entries(categorias).filter(([key]) => !CLAVES_CATEGORIAS_POR_DEFECTO.includes(key));
     if (customEntries.length === 0) {
         alert('No hay categorías personalizadas para eliminar.');
         return;
@@ -578,7 +578,7 @@ async function addWorkout(title) {
 
     const workout = await createWorkout(title);
     if (!workout) return;
-    workouts.unshift(workout);
+    entrenamientos.unshift(workout);
     saveToStorage();
     render();
 }
@@ -588,7 +588,7 @@ async function addWorkout(title) {
  * @param {string} id - ID del entrenamiento
  */
 function toggleWorkout(id) {
-    const workout = workouts.find(w => w.id === id);
+    const workout = entrenamientos.find(w => w.id === id);
     if (workout) {
         workout.completed = !workout.completed;
         saveToStorage();
@@ -601,26 +601,26 @@ function toggleWorkout(id) {
  * @param {string} id - ID del entrenamiento
  */
 function deleteWorkout(id) {
-    workouts = workouts.filter(w => w.id !== id);
+    entrenamientos = entrenamientos.filter(w => w.id !== id);
     saveToStorage();
     render();
 }
 
 function toggleCompleteAll() {
-    const allCompleted = workouts.every(w => w.completed);
-    workouts.forEach(w => w.completed = !allCompleted);
+    const allCompleted = entrenamientos.every(w => w.completed);
+    entrenamientos.forEach(w => w.completed = !allCompleted);
     saveToStorage();
     render();
 }
 
 function deleteCompleted() {
-    workouts = workouts.filter(w => !w.completed);
+    entrenamientos = entrenamientos.filter(w => !w.completed);
     saveToStorage();
     render();
 }
 
 function editWorkout(id) {
-    const workout = workouts.find(w => w.id === id);
+    const workout = entrenamientos.find(w => w.id === id);
     if (!workout) return;
 
     const span = document.querySelector(`[data-id="${id}"] .workout-item__name`);
@@ -661,12 +661,12 @@ function editWorkout(id) {
  * @param {string|null} category - Categoría a filtrar o null para todos
  */
 function filterByCategory(category) {
-    activeFilter = activeFilter === category ? null : category;
+    filtroCategoriaActivo = filtroCategoriaActivo === category ? null : category;
     render();
 }
 
 function setFilter(filter) {
-    statusFilter = filter;
+    filtroEstado = filter;
     render();
 }
 
@@ -679,14 +679,14 @@ function setFilter(filter) {
  * @returns {Object} Objeto con todas las estadísticas
  */
 function calculateStats() {
-    const total = workouts.length;
-    const completed = workouts.filter(w => w.completed).length;
+    const total = entrenamientos.length;
+    const completed = entrenamientos.filter(w => w.completed).length;
     const pending = total - completed;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     // Conteo por categorías
-    const byCategory = Object.keys(CATEGORIES).reduce((acc, key) => {
-        acc[key] = workouts.filter(w => w.category === key).length;
+    const byCategory = Object.keys(categorias).reduce((acc, key) => {
+        acc[key] = entrenamientos.filter(w => w.category === key).length;
         return acc;
     }, {});
 
@@ -709,10 +709,10 @@ function calculateStats() {
  * @returns {string} HTML del elemento
  */
 function createWorkoutHTML(workout) {
-    const category = CATEGORIES[workout.category];
+    const category = categorias[workout.category];
     const completedClass = workout.completed ? 'workout-item--completed' : '';
     const checkedAttr = workout.completed ? 'checked' : '';
-    const isCustom = category && !DEFAULT_CATEGORY_KEYS.includes(workout.category);
+    const isCustom = category && !CLAVES_CATEGORIAS_POR_DEFECTO.includes(workout.category);
     const customItemBorder = isCustom && category.color
         ? `style="border-left-color: ${category.colorBorder || mixHex(category.color, '#000000', 0.2)};"`
         : '';
@@ -731,7 +731,8 @@ function createWorkoutHTML(workout) {
                     type="checkbox"
                     class="workout-item__checkbox"
                     ${checkedAttr}
-                    onchange="toggleWorkout('${workout.id}')"
+                    data-action="toggle-workout"
+                    data-id="${workout.id}"
                 >
                 <span class="workout-item__checkmark"></span>
             </label>
@@ -739,7 +740,8 @@ function createWorkoutHTML(workout) {
             <div class="workout-item__content">
                 <span 
                     class="workout-item__name"
-                    onclick="editWorkout('${workout.id}')"
+                    data-action="edit-workout"
+                    data-id="${workout.id}"
 
                 >
                     ${escapeHTML(workout.title)}
@@ -754,7 +756,8 @@ function createWorkoutHTML(workout) {
                 type="button"
                 class="workout-item__delete"
                 aria-label="Eliminar entrenamiento"
-                onclick="deleteWorkout('${workout.id}')"
+                data-action="delete-workout"
+                data-id="${workout.id}"
             >
                 🗑️
             </button>
@@ -781,31 +784,31 @@ function renderWorkouts() {
     if (!listElement) return;
 
     // Filtrar si hay categoría activa
-    let filteredWorkouts = [...workouts];
+    let filteredWorkouts = [...entrenamientos];
 
-    // filtro categoria
-    if (activeFilter) {
-        filteredWorkouts = filteredWorkouts.filter(w => w.category === activeFilter);
+    // filtro por categoría
+    if (filtroCategoriaActivo) {
+        filteredWorkouts = filteredWorkouts.filter(w => w.category === filtroCategoriaActivo);
     }
 
-    // filtro stato
-    if (statusFilter === "completed") {
+    // filtro por estado
+    if (filtroEstado === "completed") {
         filteredWorkouts = filteredWorkouts.filter(w => w.completed);
-    } else if (statusFilter === "pending") {
+    } else if (filtroEstado === "pending") {
         filteredWorkouts = filteredWorkouts.filter(w => !w.completed);
     }
 
     // filtro search
-    if (searchText) {
+    if (textoBusqueda) {
         filteredWorkouts = filteredWorkouts.filter(w =>
-            w.title.toLowerCase().includes(searchText)
+            w.title.toLowerCase().includes(textoBusqueda)
         );
     }
 
     if (filteredWorkouts.length === 0) {
         listElement.innerHTML = `
             <li class="workout-item" style="justify-content: center; opacity: 0.6;">
-                <span>${activeFilter ? 'No hay entrenamientos en esta categoría' : 'No hay entrenamientos. ¡Añade uno!'}</span>
+                <span>${filtroCategoriaActivo ? 'No hay entrenamientos en esta categoría' : 'No hay entrenamientos. ¡Añade uno!'}</span>
             </li>
         `;
         return;
@@ -832,11 +835,11 @@ function renderStats() {
     const pendingEl = document.querySelector('.stat-card--blue .stat-card__number');
     if (pendingEl) pendingEl.textContent = stats.pending;
 
-    // Eliminato blocco hardcoded push/pull/legs: ora supporta categorie dinamiche.
+    // Se eliminó el bloque hardcoded push/pull/legs: ahora soporta categorías dinámicas.
     const categoryList = document.querySelector('.stat-card__list');
     if (categoryList) {
-        categoryList.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
-            const isCustom = !DEFAULT_CATEGORY_KEYS.includes(key);
+        categoryList.innerHTML = Object.entries(categorias).map(([key, cat]) => {
+            const isCustom = !CLAVES_CATEGORIAS_POR_DEFECTO.includes(key);
             const customBadgeStyle = isCustom && cat.color
                 ? `style="
                     background: linear-gradient(135deg, ${cat.colorLighter || mixHex(cat.color, '#ffffff', 0.9)} 0%, ${cat.colorLight || mixHex(cat.color, '#ffffff', 0.82)} 100%);
@@ -879,7 +882,7 @@ function updateCategoryButtons(byCategory) {
         }
 
         // Actualizar estado activo
-        button.classList.toggle('category-button--active', activeFilter === category);
+        button.classList.toggle('category-button--active', filtroCategoriaActivo === category);
     });
 }
 
@@ -932,12 +935,12 @@ function render() {
 
 function updateFilterButtons() {
     document.querySelectorAll('[data-filter]').forEach(btn => {
-        btn.classList.toggle('category-button--active', btn.dataset.filter === statusFilter);
+        btn.classList.toggle('category-button--active', btn.dataset.filter === filtroEstado);
     });
 
     const btnComplete = document.getElementById('btn-complete-all');
-    if (btnComplete && workouts.length > 0) {
-        const allCompleted = workouts.every(w => w.completed);
+    if (btnComplete && entrenamientos.length > 0) {
+        const allCompleted = entrenamientos.every(w => w.completed);
         btnComplete.textContent = allCompleted ? '↩️ Deseleccionar todo' : '✅ Completar todo';
     }
 }
@@ -964,7 +967,7 @@ function initEventListeners() {
         });
     }
 
-    // Eliminato listener generico su ".category-button": causava click ambiguo su filtri/azioni.
+    // Se eliminó el listener genérico de ".category-button": causaba clics ambiguos entre filtros/acciones.
     // Botones de categoría (delegación para soportar categorías dinámicas)
     const categoryContainer = document.querySelector('.categories[role="group"]');
     if (categoryContainer) {
@@ -975,39 +978,63 @@ function initEventListeners() {
         });
     }
 
-    // Filtri stato
+    // Filtros de estado
     document.querySelectorAll('[data-filter]').forEach(button => {
         button.addEventListener('click', () => {
             setFilter(button.dataset.filter);
         });
     });
 
-    // Azioni massive
-    const completeAllBtn = document.getElementById('btn-complete-all');
-    if (completeAllBtn) {
-        completeAllBtn.addEventListener('click', toggleCompleteAll);
+    // Acciones masivas
+    const botonCompletarTodo = document.getElementById('btn-complete-all');
+    if (botonCompletarTodo) {
+        botonCompletarTodo.addEventListener('click', toggleCompleteAll);
     }
 
-    const deleteCompletedBtn = document.getElementById('btn-delete-completed');
-    if (deleteCompletedBtn) {
-        deleteCompletedBtn.addEventListener('click', deleteCompleted);
+    const botonEliminarCompletados = document.getElementById('btn-delete-completed');
+    if (botonEliminarCompletados) {
+        botonEliminarCompletados.addEventListener('click', deleteCompleted);
     }
 
     // Dark mode (eliminato onclick inline in HTML)
-    const darkToggleBtn = document.getElementById('dark-toggle');
-    if (darkToggleBtn) {
-        darkToggleBtn.addEventListener('click', toggleDarkMode);
+    const botonModoOscuro = document.getElementById('dark-toggle');
+    if (botonModoOscuro) {
+        botonModoOscuro.addEventListener('click', toggleDarkMode);
     }
 
-    const manageCategoriesBtn = document.getElementById('btn-manage-categories');
-    if (manageCategoriesBtn) {
-        manageCategoriesBtn.addEventListener('click', openDeleteCategoriesModal);
+    const botonGestionCategorias = document.getElementById('btn-manage-categories');
+    if (botonGestionCategorias) {
+        botonGestionCategorias.addEventListener('click', openDeleteCategoriesModal);
+    }
+
+    // Delegación de eventos para entrenamientos (checkbox, editar título, eliminar)
+    const listaEntrenamientos = document.getElementById('workout-list');
+    if (listaEntrenamientos) {
+        listaEntrenamientos.addEventListener('change', (e) => {
+            const casilla = e.target.closest('.workout-item__checkbox');
+            if (!casilla) return;
+            const id = casilla.dataset.id;
+            if (id) toggleWorkout(id);
+        });
+
+        listaEntrenamientos.addEventListener('click', (e) => {
+            const elementoEditar = e.target.closest('.workout-item__name');
+            if (elementoEditar && elementoEditar.dataset.id) {
+                editWorkout(elementoEditar.dataset.id);
+                return;
+            }
+
+            const botonEliminar = e.target.closest('.workout-item__delete');
+            if (botonEliminar && botonEliminar.dataset.id) {
+                deleteWorkout(botonEliminar.dataset.id);
+            }
+        });
     }
     // Buscador
     const searchInput = document.getElementById("search-input");
     if (searchInput) {
         searchInput.addEventListener("input", (e) => {
-            searchText = e.target.value.toLowerCase();
+            textoBusqueda = e.target.value.toLowerCase();
             render();
         });
     }
@@ -1022,7 +1049,7 @@ function initEventListeners() {
  */
 function init() {
     // Cargar datos guardados
-    workouts = loadFromStorage();
+    entrenamientos = loadFromStorage();
 
     // Actualizar fecha del header
     updateHeaderDate();
@@ -1041,25 +1068,25 @@ function init() {
 document.addEventListener('DOMContentLoaded', init);
 
 // ==============================
-// DARK MODE
+// MODO OSCURO
 // ==============================
 
-const DARK_MODE_KEY = "taskflow_dark_mode";
+const CLAVE_MODO_OSCURO = "taskflow_dark_mode";
 
 function toggleDarkMode() {
     const html = document.documentElement;
     const button = document.getElementById("dark-toggle");
     if (!button) return;
-    const isDark = html.classList.toggle("dark");
+    const modoOscuroActivo = html.classList.toggle("dark");
 
-    // Salva in LocalStorage
-    localStorage.setItem("taskflow_dark_mode", isDark);
+    // Guarda en LocalStorage
+    localStorage.setItem(CLAVE_MODO_OSCURO, modoOscuroActivo);
 
-    // Cambia testo bottone
-    if (isDark) {
-        button.textContent = "☀️ Light Mode";
+    // Cambia texto del botón
+    if (modoOscuroActivo) {
+        button.textContent = "☀️ Modo claro";
     } else {
-        button.textContent = "🌙 Dark Mode";
+        button.textContent = "🌙 Modo oscuro";
     }
 }
 
@@ -1067,13 +1094,13 @@ function loadDarkMode() {
     const html = document.documentElement;
     const button = document.getElementById("dark-toggle");
     if (!button) return;
-    const isDark = localStorage.getItem("taskflow_dark_mode") === "true";
+    const modoOscuroActivo = localStorage.getItem(CLAVE_MODO_OSCURO) === "true";
 
-    if (isDark) {
+    if (modoOscuroActivo) {
         html.classList.add("dark");
-        button.textContent = "☀️ Light Mode";
+        button.textContent = "☀️ Modo claro";
     } else {
         html.classList.remove("dark");
-        button.textContent = "🌙 Dark Mode";
+        button.textContent = "🌙 Modo oscuro";
     }
 }

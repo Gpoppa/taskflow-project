@@ -953,7 +953,7 @@ body {
   color: #94a3b8;
 }
 
-/* Box Esta semana e Meta semanal */
+/* Bloques "Esta semana" y "Meta semanal" */
 .dark .stat-card {
   background-color: #1e293b;
 }
@@ -986,7 +986,7 @@ body {
   color: #64748b;
 }
 
-/* Bottone Añadir */
+/* Botón Añadir */
 .dark .form__button {
   background-color: #f97316;
 }
@@ -995,7 +995,7 @@ body {
   background-color: #ea580c;
 }
 
-/* Categorie custom — fallback colore */
+/* Categorías personalizadas — color de respaldo */
 .badge:not(.badge--push):not(.badge--pull):not(.badge--legs) {
     background-color: #ede9fe;
     color: #7c3aed;
