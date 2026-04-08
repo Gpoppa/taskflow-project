@@ -83,6 +83,8 @@ let entrenamientos = [];
 let filtroCategoriaActivo = null;
 let textoBusqueda = '';
 let filtroEstado = 'all'; // 'all', 'completed', 'pending'
+const LONGITUD_MIN_TITULO = 3;
+const LONGITUD_MAX_TITULO = 60;
 
 // ============================================
 // UTILIDADES - FUNCIONES REUTILIZABLES
@@ -109,6 +111,43 @@ function formatDate(dateString) {
         hour: '2-digit',
         minute: '2-digit'
     });
+}
+
+function validarTituloEntrenamiento(tituloOriginal) {
+    const titulo = (tituloOriginal || '').trim();
+    if (!titulo) {
+        return { valido: false, mensaje: 'Escribe un nombre para el entrenamiento.' };
+    }
+    if (titulo.length < LONGITUD_MIN_TITULO) {
+        return {
+            valido: false,
+            mensaje: `El nombre debe tener al menos ${LONGITUD_MIN_TITULO} caracteres.`
+        };
+    }
+    if (titulo.length > LONGITUD_MAX_TITULO) {
+        return {
+            valido: false,
+            mensaje: `El nombre no puede superar ${LONGITUD_MAX_TITULO} caracteres.`
+        };
+    }
+    if (/[<>]/.test(titulo)) {
+        return {
+            valido: false,
+            mensaje: 'El nombre no puede contener los caracteres < o >.'
+        };
+    }
+
+    const existeDuplicado = entrenamientos.some((entrenamiento) =>
+        entrenamiento.title.trim().localeCompare(titulo, 'es', { sensitivity: 'base' }) === 0
+    );
+    if (existeDuplicado) {
+        return {
+            valido: false,
+            mensaje: 'Ya existe un entrenamiento con ese nombre.'
+        };
+    }
+
+    return { valido: true, tituloNormalizado: titulo };
 }
 
 /**
@@ -574,13 +613,19 @@ async function createWorkout(title) {
  * @param {string} title - Título del entrenamiento
  */
 async function addWorkout(title) {
-    if (!title || !title.trim()) return;
+    const validacion = validarTituloEntrenamiento(title);
+    if (!validacion.valido) {
+        return { ok: false, mensaje: validacion.mensaje };
+    }
 
-    const workout = await createWorkout(title);
-    if (!workout) return;
+    const workout = await createWorkout(validacion.tituloNormalizado);
+    if (!workout) {
+        return { ok: false, cancelado: true };
+    }
     entrenamientos.unshift(workout);
     saveToStorage();
     render();
+    return { ok: true };
 }
 
 /**
@@ -956,13 +1001,28 @@ function initEventListeners() {
     // Formulario de nuevo entrenamiento
     const form = document.getElementById('workout-form');
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const input = document.getElementById('workout-input');
-            if (input && input.value.trim()) {
-                addWorkout(input.value);
-                input.value = '';
-                input.focus();
+            if (input) {
+                input.setCustomValidity('');
+                const resultado = await addWorkout(input.value);
+                if (resultado?.ok) {
+                    input.value = '';
+                    input.focus();
+                    return;
+                }
+
+                if (resultado?.cancelado) {
+                    input.focus();
+                    return;
+                }
+
+                if (resultado?.mensaje) {
+                    input.setCustomValidity(resultado.mensaje);
+                    input.reportValidity();
+                    input.focus();
+                }
             }
         });
     }
